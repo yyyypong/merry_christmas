@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>✨ 浪漫圣诞树 ✨</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, #1a0a15 0%, #0d0510 50%, #050208 100%);
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        #video {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 160px;
+            height: 120px;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 182, 193, 0.6);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.4), inset 0 0 20px rgba(255, 182, 193, 0.1);
+            z-index: 100;
+            transform: scaleX(-1);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        #gesture-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255, 215, 230, 0.95);
+            font-size: 12px;
+            z-index: 100;
+            background: linear-gradient(135deg, rgba(40, 10, 30, 0.85), rgba(20, 5, 25, 0.9));
+            padding: 16px 20px;
+            border-radius: 16px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 182, 193, 0.4);
+            box-shadow: 0 8px 32px rgba(255, 105, 180, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            line-height: 1.9;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        #gesture-hint.show {
+            opacity: 1;
+        }
+        
+        #gesture-hint span {
+            display: block;
+            margin: 3px 0;
+        }
+        
+        #status-panel {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            z-index: 100;
+            background: linear-gradient(145deg, rgba(30, 10, 25, 0.9), rgba(15, 5, 18, 0.95));
+            padding: 16px 22px;
+            border-radius: 50px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+            box-shadow: 
+                0 8px 32px rgba(255, 105, 180, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        #status-panel.show {
+            opacity: 1;
+        }
+        
+        .status-light {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.4s ease;
+        }
+        
+        .status-light::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .status-light.tree {
+            background: radial-gradient(circle at 30% 30%, #ff69b4, #ff1493);
+            box-shadow: 0 0 15px #ff69b4, 0 0 30px rgba(255, 105, 180, 0.5);
+        }
+        
+        .status-light.tree::before {
+            background: rgba(255, 105, 180, 0.4);
+        }
+        
+        .status-light.dispersed {
+            background: radial-gradient(circle at 30% 30%, #ffd700, #ffa500);
+            box-shadow: 0 0 15px #ffd700, 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+        
+        .status-light.dispersed::before {
+            background: rgba(255, 215, 0, 0.4);
+        }
+        
+        .status-light.photo {
+            background: radial-gradient(circle at 30% 30%, #00ffff, #00bfff);
+            box-shadow: 0 0 15px #00ffff, 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+        
+        .status-light.photo::before {
+            background: rgba(0, 255, 255, 0.4);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+            50% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+        }
+        
+        #status-text {
+            color: rgba(255, 220, 235, 0.95);
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 182, 193, 0.5);
+        }
+        
+        #debug-info {
+            position: fixed;
+            top: 80px;
+            right: 25px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            color: #aaffaa;
+            font-size: 11px;
+            font-family: monospace;
+            max-width: 200px;
+            line-height: 1.6;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        #debug-info.show {
+            opacity: 1;
+        }
+        
+        #photo-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            background: radial-gradient(ellipse at center, rgba(30, 10, 25, 0.85), rgba(5, 2, 8, 0.95));
+            backdrop-filter: blur(8px);
+        }
+        
+        #photo-overlay.show {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes photoFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-15px) rotate(1deg) scale(1.02); }
+        }
+        
+        #photo-overlay img {
+            max-width: 75%;
+            max-height: 75%;
+            border-radius: 20px;
+            box-shadow: 
+                0 0 80px rgba(255, 105, 180, 0.6),
+                0 0 120px rgba(255, 182, 193, 0.3),
+                0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 4px solid rgba(255, 215, 230, 0.7);
+            animation: photoFloat 4s ease-in-out infinite;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffd1dc;
+            font-size: 18px;
+            z-index: 200;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
+        }
+        
+        .loading::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 50px;
+            margin: 20px auto;
+            border: 3px solid rgba(255, 182, 193, 0.3);
+            border-top-color: #ff69b4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 入场动画遮罩 */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 150;
+            pointer-events: none;
+        }
+        
+        #intro-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffd1dc;
+            font-size: 28px;
+            z-index: 160;
+            text-align: center;
+            text-shadow: 0 0 30px rgba(255, 105, 180, 0.8);
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            letter-spacing: 8px;
+        }
+        
+        #intro-text.show {
+            opacity: 1;
+        }
+        
+        #intro-text.hide {
+            opacity: 0;
+        }
+
+        @media (max-width: 768px) {
+            #video {
+                width: 100px;
+                height: 75px;
+                bottom: 10px;
+                right: 10px;
+                border-radius: 12px;
+            }
+            
+            #gesture-hint {
+                font-size: 10px;
+                padding: 12px 14px;
+                bottom: 10px;
+                left: 10px;
+                max-width: 160px;
+                line-height: 1.6;
+            }
+            
+            #status-panel {
+                top: 15px;
+                right: 15px;
+                padding: 12px 18px;
+            }
+            
+            #status-text {
+                font-size: 11px;
+            }
+            
+            #photo-overlay img {
+                max-width: 90%;
+                max-height: 70%;
+            }
+            
+            #debug-info {
+                display: none;
+            }
+            
+            #intro-text {
+                font-size: 20px;
+                letter-spacing: 4px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #gesture-hint {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <video id="video" autoplay playsinline></video>
+    
+    <div id="gesture-hint">
+        <span>✊ 握拳 — 合拢圣诞树</span>
+        <span>🖐️ 张开五指 — 散开粒子</span>
+        <span>👌 捏取 — 抓取照片</span>
+        <span>✋ 移动手掌 — 旋转视角</span>
+    </div>
+    
+    <div id="status-panel">
+        <div class="status-light tree" id="status-light"></div>
+        <span id="status-text">圣诞树</span>
+    </div>
+    
+    <div id="debug-info">
+        <div>照片数量: <span id="photo-count">0</span></div>
+        <div>当前手势: <span id="current-gesture">无</span></div>
+        <div>当前状态: <span id="current-state">tree</span></div>
+        <div>捏取距离: <span id="pinch-distance">-</span></div>
+    </div>
+    
+    <div id="photo-overlay">
+        <img id="photo-display" src="" alt="Oops! 不小心被你抓到了">
+    </div>
+    
+    <div id="intro-overlay"></div>
+    <div id="intro-text">又一年圣诞节啦徐江雨小宝宝🎄</div>
+    
+    <div class="loading" id="loading">等待~永久的等待~...</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ========== 配置 ==========
+        const CONFIG = {
+            particleCount: 38000,
+            groundParticleCount: 8000,
+            sparkleCount: 180,
+            trailParticleCount: 3000,  // 彩带粒子数量
+            maxPhotos: 100,
+            transitionSpeed: 0.008,  // 更慢的切换速度
+            rotationSpeed: 0.0004,   // 自然旋转速度
+            disperseRadius: 28,
+            treeScale: 1.15,
+            introDuration: 5.0       // 入场动画持续时间（秒）
+        };
+
+        // ========== 全局变量 ==========
+        let scene, camera, renderer, composer;
+        let treeParticles, groundParticles, sparkleParticles, trailParticles;
+        let treePositions = [], dispersedPositions = [], currentPositions = [];
+        let startPositions = [];  // 入场动画起始位置
+        let photoList = [];
+        let currentState = 'tree';
+        let transitionProgress = 1;
+        let targetState = 'tree';
+        let stateBlend = 1;
+        let targetStateBlend = 1;
+        let autoRotation = 0;
+        let cameraAngleX = 0, cameraAngleY = 0.3;
+        let targetCameraAngleX = 0, targetCameraAngleY = 0.3;
+        let clock = new THREE.Clock();
+        let lastHandX = 0.5, lastHandY = 0.5;
+        let lastGesture = '';
+        let gestureStability = 0;
+        
+        // 入场动画状态
+        let introPhase = 'starting';  // 'starting', 'trailing', 'forming', 'complete'
+        let introProgress = 0;
+        let introStartTime = 0;
+        let particleRevealProgress = [];  // 每个粒子的显示进度
+
+        // ========== 初始化 ==========
+        async function init() {
+            setupScene();
+            setupPostProcessing();
+            await loadPhotoList();
+            createParticleSystems();
+            setupHandTracking();
+            
+            // 启动入场动画
+            startIntroAnimation();
+            
+            animate();
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function setupScene() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x0a0510, 0.012);
+
+            const aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
+            camera.position.set(0, 10, 32);
+            camera.lookAt(0, 6, 0);
+
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.3;
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffb6c1, 0.4);
+            scene.add(ambientLight);
+
+            const pinkLight = new THREE.PointLight(0xff69b4, 2.5, 60);
+            pinkLight.position.set(0, 18, 0);
+            scene.add(pinkLight);
+
+            const goldLight = new THREE.PointLight(0xffd700, 2, 50);
+            goldLight.position.set(8, 12, 8);
+            scene.add(goldLight);
+
+            const roseLight = new THREE.PointLight(0xff1493, 1.5, 40);
+            roseLight.position.set(-8, 6, -8);
+            scene.add(roseLight);
+            
+            const whiteLight = new THREE.PointLight(0xffffff, 1, 35);
+            whiteLight.position.set(0, 20, 5);
+            scene.add(whiteLight);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function setupPostProcessing() {
+            composer = new EffectComposer(renderer);
+            
+            const renderPass = new RenderPass(scene, camera);
+            composer.addPass(renderPass);
+
+            const bloomPass = new UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                1.8,
+                0.5,
+                0.3
+            );
+            composer.addPass(bloomPass);
+        }
+
+        async function loadPhotoList() {
+            const extensions = ['jpg', 'JPG', 'jpeg', 'JPEG', 'png', 'PNG'];
+            
+            for (let i = 1; i <= CONFIG.maxPhotos; i++) {
+                let found = false;
+                
+                for (const ext of extensions) {
+                    if (found) break;
+                    
+                    const path = `image/${i}.${ext}`;
+                    try {
+                        const exists = await checkImageExists(path);
+                        if (exists) {
+                            photoList.push(path);
+                            found = true;
+                            console.log(`✓ 找到照片: ${path}`);
+                        }
+                    } catch (e) {}
+                }
+                
+                if (!found && photoList.length > 0 && i > photoList.length + 5) {
+                    break;
+                }
+            }
+            
+            console.log(`总共找到 ${photoList.length} 张照片:`, photoList);
+            document.getElementById('photo-count').textContent = photoList.length;
+        }
+
+        function checkImageExists(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = src;
+            });
+        }
+
+        function createParticleSystems() {
+            createTreeParticles();
+            createGroundParticles();
+            createSparkleParticles();
+            createTrailParticles();
+        }
+
+        function generateTreePosition(index, total) {
+            const rand = Math.random;
+            const scale = CONFIG.treeScale;
+            
+            if (rand() < 0.025) {
+                const h = rand() * 2.5;
+                const r = (0.25 + rand() * 0.15) * scale;
+                const angle = rand() * Math.PI * 2;
+                return new THREE.Vector3(
+                    Math.cos(angle) * r,
+                    h - 1.5,
+                    Math.sin(angle) * r
+                );
+            }
+            
+            if (rand() < 0.045) {
+                const t = rand() * Math.PI * 2;
+                const heartScale = (0.9 + rand() * 0.4) * scale;
+                const x = 16 * Math.pow(Math.sin(t), 3) * 0.065 * heartScale;
+                const y = (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) * 0.065 * heartScale + 18.5 * scale;
+                const z = (rand() - 0.5) * 0.6;
+                return new THREE.Vector3(x, y, z);
+            }
+
+            const layers = 6;
+            const layerIndex = Math.floor(rand() * layers);
+            const layerHeight = (2.8 + layerIndex * 2.6) * scale;
+            const layerRadius = (6.0 - layerIndex * 0.85) * scale;
+            
+            let h = layerHeight + (rand() - 0.3) * 2.0 * scale;
+            let angle = rand() * Math.PI * 2;
+            let r = rand() * layerRadius;
+            
+            const branchCount = 7 + layerIndex * 2;
+            const nearestBranchAngle = Math.round(angle / (Math.PI * 2 / branchCount)) * (Math.PI * 2 / branchCount);
+            const angleDiff = Math.abs(angle - nearestBranchAngle);
+            
+            if (angleDiff < 0.35) {
+                const branchExtend = rand();
+                r = layerRadius * (0.55 + branchExtend * 0.85);
+                const tipLift = branchExtend * branchExtend * 1.8 * scale;
+                h += tipLift;
+                const taper = 1 - branchExtend * 0.75;
+                const offsetAngle = (rand() - 0.5) * 0.12 * taper;
+                angle = nearestBranchAngle + offsetAngle;
+                
+                if (rand() < 0.3 && branchExtend > 0.5) {
+                    const subAngle = (rand() - 0.5) * 0.5;
+                    angle += subAngle;
+                    h += rand() * 0.5 * scale;
+                }
+            } else {
+                r = r * 0.75;
+            }
+
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            
+            return new THREE.Vector3(x, h, z);
+        }
+
+        function generateDispersedPosition() {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            const r = CONFIG.disperseRadius * (0.3 + Math.random() * 0.7);
+            
+            return new THREE.Vector3(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.sin(phi) * Math.sin(theta) * 0.6 + 9,
+                r * Math.cos(phi)
+            );
+        }
+        
+        // 生成入场动画的起始位置（远方飘来的效果）
+        function generateStartPosition(treePos, index, total) {
+            // 从远处、上方飘来
+            const angle = (index / total) * Math.PI * 8 + Math.random() * 0.5;  // 螺旋角度
+            const distance = 80 + Math.random() * 40;  // 远处
+            const heightOffset = 30 + Math.random() * 20;
+            
+            return new THREE.Vector3(
+                Math.cos(angle) * distance * 0.5,
+                treePos.y + heightOffset,
+                -distance + Math.sin(angle) * 20
+            );
+        }
+
+        function createTreeParticles() {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(CONFIG.particleCount * 3);
+            const colors = new Float32Array(CONFIG.particleCount * 3);
+            const sizes = new Float32Array(CONFIG.particleCount);
+            const randoms = new Float32Array(CONFIG.particleCount);
+            const revealOrder = new Float32Array(CONFIG.particleCount);  // 显示顺序
+
+            const palette = [
+                new THREE.Color(0xff69b4),
+                new THREE.Color(0xffb6c1),
+                new THREE.Color(0xff1493),
+                new THREE.Color(0xffc0cb),
+                new THREE.Color(0xffd700),
+                new THREE.Color(0xffe4e1),
+                new THREE.Color(0xff85a2),
+                new THREE.Color(0xffffff),
+            ];
+
+            for (let i = 0; i < CONFIG.particleCount; i++) {
+                const treePos = generateTreePosition(i, CONFIG.particleCount);
+                const dispersedPos = generateDispersedPosition();
+                const startPos = generateStartPosition(treePos, i, CONFIG.particleCount);
+
+                treePositions.push(treePos.clone());
+                dispersedPositions.push(dispersedPos.clone());
+                startPositions.push(startPos.clone());
+                currentPositions.push(startPos.clone());  // 从起始位置开始
+                particleRevealProgress.push(0);
+
+                // 初始位置设为起始位置
+                positions[i * 3] = startPos.x;
+                positions[i * 3 + 1] = startPos.y;
+                positions[i * 3 + 2] = startPos.z;
+
+                const heightRatio = treePos.y / (18 * CONFIG.treeScale);
+                let color;
+                if (Math.random() < 0.1) {
+                    color = Math.random() < 0.5 ? palette[4] : palette[7];
+                } else {
+                    const colorIndex = Math.floor(Math.random() * 4);
+                    color = palette[colorIndex].clone();
+                    color.lerp(new THREE.Color(0xffffff), heightRatio * 0.25);
+                }
+
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+
+                sizes[i] = 0.09 + Math.random() * 0.13;
+                randoms[i] = Math.random();
+                
+                // 显示顺序：按高度和角度排序，形成彩带效果
+                const heightOrder = treePos.y / 25;  // 0-1 按高度
+                const angleOrder = (Math.atan2(treePos.z, treePos.x) + Math.PI) / (Math.PI * 2);  // 0-1 按角度
+                revealOrder[i] = heightOrder * 0.7 + angleOrder * 0.3 + Math.random() * 0.1;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            geometry.setAttribute('random', new THREE.BufferAttribute(randoms, 1));
+            geometry.setAttribute('revealOrder', new THREE.BufferAttribute(revealOrder, 1));
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    pixelRatio: { value: renderer.getPixelRatio() },
+                    introProgress: { value: 0 }
+                },
+                vertexShader: `
+                    attribute float size;
+                    attribute float random;
+                    attribute float revealOrder;
+                    varying vec3 vColor;
+                    varying float vRandom;
+                    varying float vAlpha;
+                    uniform float time;
+                    uniform float pixelRatio;
+                    uniform float introProgress;
+                    
+                    void main() {
+                        vColor = color;
+                        vRandom = random;
+                        
+                        // 根据入场进度计算透明度
+                        float revealThreshold = introProgress * 1.3;  // 稍微超过1让所有粒子都显示
+                        float particleProgress = smoothstep(revealOrder - 0.15, revealOrder + 0.05, revealThreshold);
+                        vAlpha = particleProgress;
+                        
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        
+                        float pulse = 1.0 + sin(time * 2.0 + random * 6.28) * 0.15;
+                        gl_PointSize = size * pulse * pixelRatio * (320.0 / -mvPosition.z) * particleProgress;
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    varying float vRandom;
+                    varying float vAlpha;
+                    
+                    void main() {
+                        float dist = length(gl_PointCoord - vec2(0.5));
+                        if (dist > 0.5) discard;
+                        
+                        float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                        alpha *= 0.88 * vAlpha;
+                        
+                        float glow = exp(-dist * 3.0);
+                        vec3 finalColor = vColor + vec3(glow * 0.35);
+                        
+                        gl_FragColor = vec4(finalColor, alpha);
+                    }
+                `,
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            treeParticles = new THREE.Points(geometry, material);
+            scene.add(treeParticles);
+        }
+
+        function createGroundParticles() {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(CONFIG.groundParticleCount * 3);
+            const colors = new Float32Array(CONFIG.groundParticleCount * 3);
+            const sizes = new Float32Array(CONFIG.groundParticleCount);
+            const rings = new Float32Array(CONFIG.groundParticleCount);
+
+            for (let i = 0; i < CONFIG.groundParticleCount; i++) {
+                const ringIndex = Math.floor(Math.random() * 14);
+                const baseRadius = 3.5 + ringIndex * 2.0;
+                const angle = Math.random() * Math.PI * 2;
+                const radiusVariation = (Math.random() - 0.5) * 0.9;
+                const r = baseRadius + radiusVariation;
+
+                positions[i * 3] = Math.cos(angle) * r;
+                positions[i * 3 + 1] = -2 + (Math.random() - 0.5) * 0.4;
+                positions[i * 3 + 2] = Math.sin(angle) * r;
+
+                const brightness = 0.35 + (1 - ringIndex / 14) * 0.65;
+                colors[i * 3] = 1.0 * brightness;
+                colors[i * 3 + 1] = 0.7 * brightness;
+                colors[i * 3 + 2] = 0.8 * brightness;
+
+                sizes[i] = 0.05 + Math.random() * 0.07;
+                rings[i] = ringIndex / 14;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            geometry.setAttribute('ring', new THREE.BufferAttribute(rings, 1));
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    pixelRatio: { value: renderer.getPixelRatio() },
+                    introProgress: { value: 0 }
+                },
+                vertexShader: `
+                    attribute float size;
+                    attribute float ring;
+                    varying vec3 vColor;
+                    varying float vRing;
+                    varying float vAlpha;
+                    uniform float time;
+                    uniform float pixelRatio;
+                    uniform float introProgress;
+                    
+                    void main() {
+                        vColor = color;
+                        vRing = ring;
+                        
+                        // 地面粒子在入场动画后期显示
+                        vAlpha = smoothstep(0.6, 1.0, introProgress);
+                        
+                        vec3 pos = position;
+                        float wave = sin(time * 0.5 + ring * 6.28 * 3.0) * 0.25;
+                        pos.y += wave;
+                        
+                        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                        gl_PointSize = size * pixelRatio * (220.0 / -mvPosition.z) * vAlpha;
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    varying float vRing;
+                    varying float vAlpha;
+                    
+                    void main() {
+                        float dist = length(gl_PointCoord - vec2(0.5));
+                        if (dist > 0.5) discard;
+                        
+                        float alpha = (1.0 - smoothstep(0.0, 0.5, dist)) * 0.65 * vAlpha;
+                        gl_FragColor = vec4(vColor, alpha);
+                    }
+                `,
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            groundParticles = new THREE.Points(geometry, material);
+            scene.add(groundParticles);
+        }
+
+        function createSparkleParticles() {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(CONFIG.sparkleCount * 3);
+            const phases = new Float32Array(CONFIG.sparkleCount);
+            const sparkleTypes = new Float32Array(CONFIG.sparkleCount);
+
+            for (let i = 0; i < CONFIG.sparkleCount; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                const y = Math.random() * 20 * CONFIG.treeScale - 1;
+                const radiusAtHeight = Math.max(0.5, 7 - y * 0.28) * CONFIG.treeScale;
+                const r = Math.random() * radiusAtHeight * 1.2;
+
+                positions[i * 3] = Math.cos(theta) * r;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = Math.sin(theta) * r;
+                
+                phases[i] = Math.random() * Math.PI * 2;
+                sparkleTypes[i] = Math.random();
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('phase', new THREE.BufferAttribute(phases, 1));
+            geometry.setAttribute('sparkleType', new THREE.BufferAttribute(sparkleTypes, 1));
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    pixelRatio: { value: renderer.getPixelRatio() },
+                    visibility: { value: 0 }  // 入场时从0开始
+                },
+                vertexShader: `
+                    attribute float phase;
+                    attribute float sparkleType;
+                    varying float vAlpha;
+                    varying float vType;
+                    uniform float time;
+                    uniform float pixelRatio;
+                    uniform float visibility;
+                    
+                    void main() {
+                        vType = sparkleType;
+                        float speed = 2.5 + sparkleType * 2.0;
+                        float twinkle = sin(time * speed + phase) * 0.5 + 0.5;
+                        twinkle = pow(twinkle, 2.5);
+                        vAlpha = twinkle * visibility;
+                        
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        float baseSize = 0.18 + sparkleType * 0.12;
+                        gl_PointSize = (baseSize + twinkle * 0.25) * pixelRatio * (300.0 / -mvPosition.z) * visibility;
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying float vAlpha;
+                    varying float vType;
+                    
+                    void main() {
+                        vec2 center = gl_PointCoord - vec2(0.5);
+                        float dist = length(center);
+                        
+                        if (dist > 0.5) discard;
+                        
+                        float glow = 1.0 - smoothstep(0.0, 0.5, dist);
+                        glow = pow(glow, 1.5);
+                        
+                        float core = exp(-dist * 6.0);
+                        
+                        float alpha = (glow * 0.6 + core * 0.8) * vAlpha;
+                        vec3 color = mix(vec3(1.0, 0.92, 0.8), vec3(1.0, 1.0, 1.0), vType);
+                        
+                        gl_FragColor = vec4(color, alpha);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            sparkleParticles = new THREE.Points(geometry, material);
+            scene.add(sparkleParticles);
+        }
+        
+        // 创建飘来的彩带粒子
+        function createTrailParticles() {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(CONFIG.trailParticleCount * 3);
+            const colors = new Float32Array(CONFIG.trailParticleCount * 3);
+            const sizes = new Float32Array(CONFIG.trailParticleCount);
+            const trailProgress = new Float32Array(CONFIG.trailParticleCount);
+
+            for (let i = 0; i < CONFIG.trailParticleCount; i++) {
+                // 从远处开始的位置
+                const t = i / CONFIG.trailParticleCount;
+                const spiralAngle = t * Math.PI * 10;
+                const distance = 100 - t * 100;
+                
+                positions[i * 3] = Math.cos(spiralAngle) * (10 + t * 5);
+                positions[i * 3 + 1] = 30 - t * 25 + Math.sin(spiralAngle * 2) * 3;
+                positions[i * 3 + 2] = -distance;
+
+                // 粉色系
+                colors[i * 3] = 1.0;
+                colors[i * 3 + 1] = 0.4 + Math.random() * 0.3;
+                colors[i * 3 + 2] = 0.6 + Math.random() * 0.2;
+
+                sizes[i] = 0.15 + Math.random() * 0.2;
+                trailProgress[i] = t;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            geometry.setAttribute('trailProgress', new THREE.BufferAttribute(trailProgress, 1));
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    pixelRatio: { value: renderer.getPixelRatio() },
+                    introProgress: { value: 0 }
+                },
+                vertexShader: `
+                    attribute float size;
+                    attribute float trailProgress;
+                    varying vec3 vColor;
+                    varying float vAlpha;
+                    uniform float time;
+                    uniform float pixelRatio;
+                    uniform float introProgress;
+                    
+                    void main() {
+                        vColor = color;
+                        
+                        // 彩带效果：只显示当前进度附近的粒子
+                        float trailHead = introProgress * 1.2;
+                        float trailTail = trailHead - 0.3;
+                        float visibility = smoothstep(trailTail, trailTail + 0.1, trailProgress) * 
+                                          (1.0 - smoothstep(trailHead - 0.1, trailHead, trailProgress));
+                        
+                        // 入场完成后淡出
+                        if (introProgress > 0.9) {
+                            visibility *= 1.0 - smoothstep(0.9, 1.0, introProgress);
+                        }
+                        
+                        vAlpha = visibility;
+                        
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        gl_PointSize = size * pixelRatio * (250.0 / -mvPosition.z) * visibility;
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    varying float vAlpha;
+                    
+                    void main() {
+                        float dist = length(gl_PointCoord - vec2(0.5));
+                        if (dist > 0.5) discard;
+                        
+                        float alpha = (1.0 - smoothstep(0.0, 0.5, dist)) * vAlpha;
+                        float glow = exp(-dist * 3.0);
+                        vec3 finalColor = vColor + vec3(glow * 0.4);
+                        
+                        gl_FragColor = vec4(finalColor, alpha);
+                    }
+                `,
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            trailParticles = new THREE.Points(geometry, material);
+            scene.add(trailParticles);
+        }
+
+        // ========== 入场动画 ==========
+        function startIntroAnimation() {
+            introPhase = 'trailing';
+            introStartTime = clock.getElapsedTime();
+            
+            // 显示欢迎文字
+            setTimeout(() => {
+                document.getElementById('intro-text').classList.add('show');
+            }, 500);
+            
+            // 隐藏欢迎文字
+            setTimeout(() => {
+                document.getElementById('intro-text').classList.remove('show');
+                document.getElementById('intro-text').classList.add('hide');
+            }, 3500);
+            
+            // 显示UI
+            setTimeout(() => {
+                document.getElementById('gesture-hint').classList.add('show');
+                document.getElementById('status-panel').classList.add('show');
+                document.getElementById('debug-info').classList.add('show');
+            }, 4500);
+        }
+        
+        function updateIntroAnimation(time) {
+            if (introPhase === 'complete') return;
+            
+            const elapsed = time - introStartTime;
+            introProgress = Math.min(1, elapsed / CONFIG.introDuration);
+            
+            // 更新彩带粒子
+            if (trailParticles) {
+                trailParticles.material.uniforms.introProgress.value = introProgress;
+                
+                // 让彩带粒子动起来
+                const positions = trailParticles.geometry.attributes.position.array;
+                const trailProgressAttr = trailParticles.geometry.attributes.trailProgress.array;
+                
+                for (let i = 0; i < CONFIG.trailParticleCount; i++) {
+                    const t = trailProgressAttr[i];
+                    const spiralAngle = t * Math.PI * 10 + time * 0.5;
+                    const baseProgress = Math.max(0, introProgress * 1.2 - t);
+                    
+                    // 从远处飞向圣诞树
+                    const flyProgress = Math.min(1, baseProgress * 3);
+                    const startZ = -100 + t * 50;
+                    const endZ = 0;
+                    
+                    positions[i * 3] = Math.cos(spiralAngle) * (10 + t * 5) * (1 - flyProgress * 0.8);
+                    positions[i * 3 + 1] = 30 - t * 25 + Math.sin(spiralAngle * 2) * 3 * (1 - flyProgress);
+                    positions[i * 3 + 2] = startZ + (endZ - startZ) * flyProgress;
+                }
+                
+                trailParticles.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            // 更新主粒子位置（从远处飞来）
+            if (treeParticles) {
+                treeParticles.material.uniforms.introProgress.value = introProgress;
+                
+                const positions = treeParticles.geometry.attributes.position.array;
+                const revealOrder = treeParticles.geometry.attributes.revealOrder.array;
+                
+                for (let i = 0; i < CONFIG.particleCount; i++) {
+                    const startPos = startPositions[i];
+                    const treePos = treePositions[i];
+                    
+                    // 每个粒子按照revealOrder决定何时开始移动
+                    const particleStart = revealOrder[i] * 0.7;
+                    const particleProgress = Math.max(0, Math.min(1, (introProgress - particleStart) / 0.4));
+                    
+                    // 使用smootherstep让飞入更自然
+                    const t = smootherstep(particleProgress);
+                    
+                    currentPositions[i].x = startPos.x + (treePos.x - startPos.x) * t;
+                    currentPositions[i].y = startPos.y + (treePos.y - startPos.y) * t;
+                    currentPositions[i].z = startPos.z + (treePos.z - startPos.z) * t;
+                    
+                    positions[i * 3] = currentPositions[i].x;
+                    positions[i * 3 + 1] = currentPositions[i].y;
+                    positions[i * 3 + 2] = currentPositions[i].z;
+                }
+                
+                treeParticles.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            // 更新地面粒子
+            if (groundParticles) {
+                groundParticles.material.uniforms.introProgress.value = introProgress;
+            }
+            
+            // 更新闪光点
+            if (sparkleParticles) {
+                const sparkleVisibility = Math.max(0, (introProgress - 0.7) / 0.3) * stateBlend;
+                sparkleParticles.material.uniforms.visibility.value = sparkleVisibility;
+            }
+            
+            // 入场完成
+            if (introProgress >= 1) {
+                introPhase = 'complete';
+                console.log('入场动画完成');
+            }
+        }
+
+        // ========== 手势识别 ==========
+        function setupHandTracking() {
+            const video = document.getElementById('video');
+            
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    width: { ideal: 320 },
+                    height: { ideal: 240 },
+                    facingMode: 'user'
+                } 
+            }).then(stream => {
+                video.srcObject = stream;
+                video.play();
+                
+                initMediaPipeHands(video);
+            }).catch(err => {
+                console.log('摄像头未授权，使用自动演示模式');
+                startDemoMode();
+            });
+        }
+
+        function initMediaPipeHands(video) {
+            if (typeof Hands === 'undefined') {
+                console.log('MediaPipe Hands未加载，使用演示模式');
+                startDemoMode();
+                return;
+            }
+
+            const hands = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.6,
+                minTrackingConfidence: 0.5
+            });
+
+            hands.onResults(onHandResults);
+
+            const cam = new Camera(video, {
+                onFrame: async () => {
+                    await hands.send({ image: video });
+                },
+                width: 320,
+                height: 240
+            });
+            cam.start();
+        }
+
+        function onHandResults(results) {
+            if (introPhase !== 'complete') return;  // 入场动画期间不响应手势
+            
+            if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+                document.getElementById('current-gesture').textContent = '无手势';
+                return;
+            }
+
+            const landmarks = results.multiHandLandmarks[0];
+            const gesture = detectGesture(landmarks);
+            
+            document.getElementById('current-gesture').textContent = gesture;
+            document.getElementById('current-state').textContent = currentState;
+            
+            const currentHandX = landmarks[9].x;
+            const currentHandY = landmarks[9].y;
+            
+            const smoothFactor = 0.3;
+            lastHandX += (currentHandX - lastHandX) * smoothFactor;
+            lastHandY += (currentHandY - lastHandY) * smoothFactor;
+
+            if (gesture === lastGesture) {
+                gestureStability++;
+            } else {
+                gestureStability = 0;
+                lastGesture = gesture;
+            }
+
+            if (gestureStability > 2) {
+                handleGesture(gesture, landmarks);
+            }
+        }
+
+        function detectGesture(landmarks) {
+            const thumbTip = landmarks[4];
+            const indexTip = landmarks[8];
+            const middleTip = landmarks[12];
+            const ringTip = landmarks[16];
+            const pinkyTip = landmarks[20];
+            
+            const indexMcp = landmarks[5];
+            const middleMcp = landmarks[9];
+            const ringMcp = landmarks[13];
+            const pinkyMcp = landmarks[17];
+            
+            const indexExtended = indexTip.y < indexMcp.y - 0.04;
+            const middleExtended = middleTip.y < middleMcp.y - 0.04;
+            const ringExtended = ringTip.y < ringMcp.y - 0.04;
+            const pinkyExtended = pinkyTip.y < pinkyMcp.y - 0.04;
+            
+            const pinchDistance = Math.sqrt(
+                Math.pow(thumbTip.x - indexTip.x, 2) +
+                Math.pow(thumbTip.y - indexTip.y, 2)
+            );
+            
+            document.getElementById('pinch-distance').textContent = pinchDistance.toFixed(3);
+
+            if (!indexExtended && !middleExtended && !ringExtended && !pinkyExtended) {
+                return 'fist';
+            }
+            
+            if (pinchDistance < 0.12) {
+                return 'pinch';
+            }
+            
+            if (indexExtended && middleExtended && ringExtended && pinkyExtended) {
+                return 'open';
+            }
+            
+            return 'other';
+        }
+
+        function handleGesture(gesture, landmarks) {
+            const statusLight = document.getElementById('status-light');
+            const statusText = document.getElementById('status-text');
+            
+            switch(gesture) {
+                case 'fist':
+                    if (targetState !== 'tree') {
+                        targetState = 'tree';
+                        targetStateBlend = 1;
+                        statusLight.className = 'status-light tree';
+                        statusText.textContent = '圣诞树模式';
+                        hidePhoto();
+                    }
+                    break;
+                    
+                case 'open':
+                    if (targetState !== 'dispersed') {
+                        targetState = 'dispersed';
+                        targetStateBlend = 0;
+                        statusLight.className = 'status-light dispersed';
+                        statusText.textContent = '转啊转啊转';
+                        hidePhoto();
+                    }
+                    targetCameraAngleX += (lastHandX - 0.5) * 0.08;
+                    targetCameraAngleY += (lastHandY - 0.5) * 0.04;
+                    targetCameraAngleY = Math.max(-0.4, Math.min(1.0, targetCameraAngleY));
+                    break;
+                    
+                case 'pinch':
+                    if (photoList.length > 0) {
+                        if (targetState !== 'photo') {
+                            targetState = 'photo';
+                            targetStateBlend = 0;
+                            const randomIndex = Math.floor(Math.random() * photoList.length);
+                            console.log(`抓取照片: ${photoList[randomIndex]}`);
+                            showPhoto(randomIndex);
+                            statusLight.className = 'status-light photo';
+                            statusText.textContent = 'Oops! 不小心被你抓到了';
+                        }
+                    } else {
+                        console.log('没有照片可以抓取');
+                        statusText.textContent = '未找到照片';
+                    }
+                    break;
+            }
+        }
+
+        function showPhoto(index) {
+            if (index < 0 || index >= photoList.length) {
+                console.error('照片索引无效:', index);
+                return;
+            }
+            
+            const overlay = document.getElementById('photo-overlay');
+            const img = document.getElementById('photo-display');
+            
+            img.onload = () => {
+                overlay.classList.add('show');
+            };
+            
+            img.onerror = () => {
+                console.error('照片加载失败:', photoList[index]);
+            };
+            
+            img.src = photoList[index];
+        }
+
+        function hidePhoto() {
+            document.getElementById('photo-overlay').classList.remove('show');
+        }
+
+        function startDemoMode() {
+            let demoState = 0;
+            const states = ['tree', 'dispersed', 'tree'];
+            const stateNames = ['圣诞树模式', '转啊转啊转', '圣诞树模式'];
+            const stateClasses = ['tree', 'dispersed', 'tree'];
+            const blendValues = [1, 0, 1];
+            
+            document.getElementById('current-gesture').textContent = '演示模式';
+            
+            // 等入场动画完成后开始演示
+            setTimeout(() => {
+                setInterval(() => {
+                    if (introPhase !== 'complete') return;
+                    
+                    demoState = (demoState + 1) % states.length;
+                    targetState = states[demoState];
+                    targetStateBlend = blendValues[demoState];
+                    
+                    const statusLight = document.getElementById('status-light');
+                    const statusText = document.getElementById('status-text');
+                    statusLight.className = 'status-light ' + stateClasses[demoState];
+                    statusText.textContent = stateNames[demoState];
+                    document.getElementById('current-state').textContent = states[demoState];
+                }, 10000);  // 更长的演示间隔
+            }, CONFIG.introDuration * 1000 + 1000);
+        }
+        
+        // 更平滑的缓动函数
+        function smootherstep(t) {
+            return t * t * t * (t * (t * 6 - 15) + 10);
+        }
+
+        // ========== 动画循环 ==========
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = clock.getElapsedTime();
+
+            // 更新入场动画
+            updateIntroAnimation(time);
+            
+            // 只有入场完成后才响应状态切换
+            if (introPhase === 'complete') {
+                updateState();
+            }
+            
+            updateParticles(time);
+            updateCamera(time);
+            
+            composer.render();
+        }
+
+        function updateParticles(time) {
+            if (treeParticles && introPhase === 'complete') {
+                treeParticles.material.uniforms.time.value = time;
+                
+                const positions = treeParticles.geometry.attributes.position.array;
+                
+                for (let i = 0; i < CONFIG.particleCount; i++) {
+                    const current = currentPositions[i];
+                    
+                    const floatX = Math.sin(time * 0.5 + i * 0.01) * 0.02;
+                    const floatY = Math.cos(time * 0.3 + i * 0.02) * 0.015;
+                    const floatZ = Math.sin(time * 0.4 + i * 0.015) * 0.02;
+                    
+                    positions[i * 3] = current.x + floatX;
+                    positions[i * 3 + 1] = current.y + floatY;
+                    positions[i * 3 + 2] = current.z + floatZ;
+                    
+                    // 散开状态下的旋转效果
+                    if (stateBlend < 0.95) {
+                        const rotationStrength = 1 - stateBlend;
+                        const angle = time * 0.15 * rotationStrength;
+                        const radius = Math.sqrt(current.x * current.x + current.z * current.z);
+                        const originalAngle = Math.atan2(current.z, current.x);
+                        positions[i * 3] = Math.cos(originalAngle + angle) * radius + floatX;
+                        positions[i * 3 + 2] = Math.sin(originalAngle + angle) * radius + floatZ;
+                    }
+                }
+                
+                treeParticles.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            if (groundParticles) {
+                groundParticles.material.uniforms.time.value = time;
+            }
+            
+            if (sparkleParticles) {
+                sparkleParticles.material.uniforms.time.value = time;
+                if (introPhase === 'complete') {
+                    sparkleParticles.material.uniforms.visibility.value = stateBlend;
+                }
+                sparkleParticles.rotation.y = time * 0.03;
+            }
+            
+            if (trailParticles) {
+                trailParticles.material.uniforms.time.value = time;
+            }
+        }
+
+        function updateState() {
+            // 更慢更丝滑的切换
+            const lerpSpeed = CONFIG.transitionSpeed;
+            
+            const diff = targetStateBlend - stateBlend;
+            if (Math.abs(diff) > 0.001) {
+                stateBlend += diff * lerpSpeed * (1 + Math.abs(diff));
+            } else {
+                stateBlend = targetStateBlend;
+                currentState = targetState;
+            }
+            
+            // 更新粒子位置
+            for (let i = 0; i < CONFIG.particleCount; i++) {
+                const treePos = treePositions[i];
+                const dispersedPos = dispersedPositions[i];
+                
+                const t = smootherstep(stateBlend);
+                
+                currentPositions[i].x = dispersedPos.x + (treePos.x - dispersedPos.x) * t;
+                currentPositions[i].y = dispersedPos.y + (treePos.y - dispersedPos.y) * t;
+                currentPositions[i].z = dispersedPos.z + (treePos.z - dispersedPos.z) * t;
+            }
+        }
+
+        function updateCamera(time) {
+            // 自然的自动旋转（圣诞树状态下）
+            if (introPhase === 'complete') {
+                autoRotation += CONFIG.rotationSpeed;
+            }
+            
+            // 相机平滑移动
+            const cameraSmoothness = 0.04;
+            cameraAngleX += (targetCameraAngleX - cameraAngleX) * cameraSmoothness;
+            cameraAngleY += (targetCameraAngleY - cameraAngleY) * cameraSmoothness;
+            
+            const radius = 32;
+            // 加入自动旋转
+            const totalAngleX = cameraAngleX + autoRotation;
+            
+            camera.position.x = Math.sin(totalAngleX) * radius;
+            camera.position.z = Math.cos(totalAngleX) * radius;
+            camera.position.y = 10 + cameraAngleY * 12;
+            
+            camera.lookAt(0, 7, 0);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ========== 启动 ==========
+        init();
+    </script>
+
+    <!-- MediaPipe 脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+</body>
+</html>
